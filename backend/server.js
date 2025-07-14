@@ -30,13 +30,7 @@ app.use(express.urlencoded({ extended: true }));
 // Static files
 app.use('/uploads', express.static('uploads'));
 
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../frontend/build")));
 
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend", "build", "index.html"));
-  });
-}
 
 // Database connection
 mongoose.connect(process.env.MONGODB_URI, {
@@ -58,7 +52,13 @@ app.use('/api/hello', (req, res) => {
   res.json({ message: 'Hello World' });
 });
 
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../frontend/build")));
 
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../frontend", "build", "index.html"));
+  });
+}
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
