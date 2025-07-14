@@ -9,13 +9,12 @@ const app = express();
 
 // Security middleware
 app.use(helmet());
-app.use(cors({
-  // Use FRONTEND_URL env variable in production, localhost:3000 in development
-  origin: process.env.NODE_ENV === 'production'
-    ? 'https://job-portal-5o3w.onrender.com'
-    : 'http://localhost:3000',
-  credentials: true
-}));
+if (process.env.NODE_ENV !== 'production') {
+  app.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true
+  }));
+}
 
 // Rate limiting
 const limiter = rateLimit({
