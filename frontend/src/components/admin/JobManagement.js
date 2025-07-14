@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BASE_URL } from '../../config/api';
 
 const JobManagement = () => {
   const [jobs, setJobs] = useState([]);
@@ -13,7 +14,7 @@ const JobManagement = () => {
   const fetchJobs = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/admin/jobs', {
+      const response = await fetch(`${BASE_URL}/admin/jobs`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -78,7 +79,7 @@ const JobManagement = () => {
   const handleStatusChange = async (jobId, newStatus) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/admin/jobs/${jobId}/status`, {
+      const response = await fetch(`${BASE_URL}/admin/jobs/${jobId}/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -101,7 +102,7 @@ const JobManagement = () => {
     if (window.confirm('Are you sure you want to delete this job?')) {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:5000/api/admin/jobs/${jobId}`, {
+        const response = await fetch(`${BASE_URL}/admin/jobs/${jobId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`

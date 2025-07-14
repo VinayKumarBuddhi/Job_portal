@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { BASE_URL } from '../../config/api';
 
 const AdminStats = () => {
   const [stats, setStats] = useState({
@@ -19,7 +20,7 @@ const AdminStats = () => {
   const fetchUserRoleStats = useCallback(async (token) => {
     try {
       // Fetch all users to get role breakdown
-      const response = await fetch('http://localhost:5000/api/admin/users?limit=1000', {
+      const response = await fetch(`${BASE_URL}/admin/users?limit=1000`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -49,7 +50,7 @@ const AdminStats = () => {
       setError('');
       
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/admin/dashboard', {
+      const response = await fetch(`${BASE_URL}/admin/dashboard`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { BASE_URL } from '../../config/api';
 
 const CompanyManagement = () => {
   const [companies, setCompanies] = useState([]);
@@ -12,7 +13,7 @@ const CompanyManagement = () => {
   const fetchCompanies = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/admin/companies', {
+      const response = await fetch(`${BASE_URL}/admin/companies`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -83,7 +84,7 @@ const CompanyManagement = () => {
   const handleVerificationChange = async (companyId, newStatus) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/admin/companies/${companyId}/verify`, {
+      const response = await fetch(`${BASE_URL}/admin/companies/${companyId}/verify`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -106,7 +107,7 @@ const CompanyManagement = () => {
     if (window.confirm('Are you sure you want to delete this company?')) {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:5000/api/admin/companies/${companyId}`, {
+        const response = await fetch(`${BASE_URL}/admin/companies/${companyId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`

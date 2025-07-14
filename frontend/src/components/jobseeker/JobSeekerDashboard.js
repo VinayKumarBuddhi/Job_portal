@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import BrowseJobs from './BrowseJobs';
 import MyApplications from './MyApplications';
 import MyProfile from './MyProfile';
+import { BASE_URL } from '../../config/api';
 
 const JobSeekerDashboard = () => {
   const navigate = useNavigate();
@@ -60,7 +61,7 @@ const JobSeekerDashboard = () => {
     setLoadingStats(true);
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/applications/my-applications`, {
+      const response = await fetch(`${BASE_URL}/applications/my-applications`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {

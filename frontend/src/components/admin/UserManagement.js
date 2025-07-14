@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { BASE_URL } from '../../config/api';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -19,7 +20,7 @@ const UserManagement = () => {
       setError('');
       
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/admin/users?page=${pagination.currentPage}&limit=20`, {
+      const response = await fetch(`${BASE_URL}/admin/users?page=${pagination.currentPage}&limit=20`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -55,7 +56,7 @@ const UserManagement = () => {
   const handleStatusChange = async (userId, newStatus) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/admin/users/${userId}/verify`, {
+      const response = await fetch(`${BASE_URL}/admin/users/${userId}/verify`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -85,7 +86,7 @@ const UserManagement = () => {
     if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
+        const response = await fetch(`${BASE_URL}/admin/users/${userId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`

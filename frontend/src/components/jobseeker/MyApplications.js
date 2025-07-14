@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { BASE_URL } from '../../config/api';
 
 const MyApplications = () => {
   const [applications, setApplications] = useState([]);
@@ -16,7 +17,7 @@ const MyApplications = () => {
     setMessage('');
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/applications/my-applications', {
+      const response = await fetch(`${BASE_URL}/applications/my-applications`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -39,7 +40,7 @@ const MyApplications = () => {
     setMessage('');
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/applications/${appId}`, {
+      const response = await fetch(`${BASE_URL}/applications/${appId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

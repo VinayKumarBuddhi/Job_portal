@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { BASE_URL } from '../../config/api';
 
 const EmployerProfile = () => {
   const [profile, setProfile] = useState({
@@ -20,7 +21,7 @@ const EmployerProfile = () => {
       setError('');
       
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/employer/profile', {
+      const response = await fetch(`${BASE_URL}/employer/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -58,7 +59,7 @@ const EmployerProfile = () => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/employer/profile', {
+      const response = await fetch(`${BASE_URL}/employer/profile`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

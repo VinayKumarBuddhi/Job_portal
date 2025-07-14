@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { BASE_URL } from '../../config/api';
 
 const MyProfile = () => {
   const [profile, setProfile] = useState({ name: '', email: '', phone: '', location: '', bio: '', experience: '', skills: [] });
@@ -17,7 +18,7 @@ const MyProfile = () => {
       setMessage('');
       const token = localStorage.getItem('token');
       const user = JSON.parse(localStorage.getItem('user'));
-      const response = await fetch(`http://localhost:5000/api/users/${user.id}`, {
+      const response = await fetch(`${BASE_URL}/users/${user.id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -44,7 +45,7 @@ const MyProfile = () => {
       setMessage('');
       const token = localStorage.getItem('token');
       const user = JSON.parse(localStorage.getItem('user'));
-      const response = await fetch(`http://localhost:5000/api/users/${user.id}`, {
+      const response = await fetch(`${BASE_URL}/users/${user.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

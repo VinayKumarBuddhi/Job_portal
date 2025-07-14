@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { BASE_URL } from '../../config/api';
 
 const BrowseJobs = ({ refreshStats }) => {
   const [jobs, setJobs] = useState([]);
@@ -20,7 +21,7 @@ const BrowseJobs = ({ refreshStats }) => {
 
   const fetchJobs = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/jobs');
+      const response = await fetch(`${BASE_URL}/jobs`);
       const data = await response.json();
       setJobs(data.data || []);
     } catch (error) {
@@ -33,7 +34,7 @@ const BrowseJobs = ({ refreshStats }) => {
   const fetchApplications = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/applications/my-applications', {
+      const response = await fetch(`${BASE_URL}/applications/my-applications`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (response.ok) {
@@ -72,7 +73,7 @@ const BrowseJobs = ({ refreshStats }) => {
     }
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/applications', {
+      const response = await fetch(`${BASE_URL}/applications`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

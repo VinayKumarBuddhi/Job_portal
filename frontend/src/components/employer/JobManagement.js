@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { BASE_URL } from '../../config/api';
 
 const JobManagement = () => {
   const [jobs, setJobs] = useState([]);
@@ -26,7 +27,7 @@ const JobManagement = () => {
       setError('');
       
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/employer/jobs', {
+      const response = await fetch(`${BASE_URL}/employer/jobs`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -50,7 +51,7 @@ const JobManagement = () => {
   const checkCompanySetup = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/employer/company', {
+      const response = await fetch(`${BASE_URL}/employer/company`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -81,9 +82,7 @@ const JobManagement = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const url = editingJob 
-        ? `http://localhost:5000/api/employer/jobs/${editingJob._id}`
-        : 'http://localhost:5000/api/employer/jobs';
+      const url = editingJob ? `${BASE_URL}/employer/jobs/${editingJob._id}` : `${BASE_URL}/employer/jobs`;
       const jobPayload = {
         title: jobForm.title,
         description: jobForm.description,
@@ -163,7 +162,7 @@ const JobManagement = () => {
     if (window.confirm('Are you sure you want to delete this job?')) {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`http://localhost:5000/api/employer/jobs/${jobId}`, {
+        const response = await fetch(`${BASE_URL}/employer/jobs/${jobId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -186,7 +185,7 @@ const JobManagement = () => {
   const handleToggleStatus = async (jobId, currentStatus) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/employer/jobs/${jobId}/toggle`, {
+      const response = await fetch(`${BASE_URL}/employer/jobs/${jobId}/toggle`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`

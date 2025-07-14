@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { BASE_URL } from '../../config/api';
 
 const Applications = () => {
   const [applications, setApplications] = useState([]);
@@ -16,7 +17,7 @@ const Applications = () => {
       setError('');
       
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/employer/applications', {
+      const response = await fetch(`${BASE_URL}/employer/applications`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -40,7 +41,7 @@ const Applications = () => {
   const fetchJobs = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/employer/jobs', {
+      const response = await fetch(`${BASE_URL}/employer/jobs`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -66,7 +67,7 @@ const Applications = () => {
       setSuccessMessage('');
       
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/employer/applications/${applicationId}/status`, {
+      const response = await fetch(`${BASE_URL}/employer/applications/${applicationId}/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

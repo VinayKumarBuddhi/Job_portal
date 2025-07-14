@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { BASE_URL } from '../../config/api';
 
 const EmployerStats = () => {
   const [stats, setStats] = useState({
@@ -19,7 +20,7 @@ const EmployerStats = () => {
       setError('');
       
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/employer/dashboard', {
+      const response = await fetch(`${BASE_URL}/employer/dashboard`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
