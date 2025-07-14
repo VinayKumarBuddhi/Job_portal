@@ -12,7 +12,7 @@ app.use(helmet());
 app.use(cors({
   // Use FRONTEND_URL env variable in production, localhost:3000 in development
   origin: process.env.NODE_ENV === 'production'
-    ? process.env.FRONTEND_URL
+    ? 'https://job-portal-5o3w.onrender.com'
     : 'http://localhost:3000',
   credentials: true
 }));
@@ -55,7 +55,9 @@ app.use('/api/applications', require('./routes/applications'));
 app.use('/api/companies', require('./routes/companies'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/employer', require('./routes/employer'));
-
+app.use('/api/hello', (req, res) => {
+  res.json({ message: 'Hello World' });
+});
 
 
 // Error handling middleware
