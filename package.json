@@ -4,8 +4,9 @@
   "description": "A full-featured job portal built with the MERN (MongoDB, Express.js, React.js, Node.js) stack. This application provides a comprehensive platform for job seekers and employers to connect, with features for job posting, application management, and company profiles.",
   "main": "index.js",
   "scripts": {
+    "start": "npm run start --prefix backend",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "concurrently \"npm run dev --prefix backend\" \"npm run start --prefix frontend\""
+    "build": "npm install --prefix backend && npm install --prefix frontend && npm run build --prefix frontend"
   },
   "keywords": [],
   "author": "",
