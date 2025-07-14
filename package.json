@@ -1,0 +1,16 @@
+{
+  "name": "mernstack",
+  "version": "1.0.0",
+  "description": "A full-featured job portal built with the MERN (MongoDB, Express.js, React.js, Node.js) stack. This application provides a comprehensive platform for job seekers and employers to connect, with features for job posting, application management, and company profiles.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "concurrently \"npm run dev --prefix backend\" \"npm run start --prefix frontend\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^9.2.0"
+  }
+}
