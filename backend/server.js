@@ -10,8 +10,9 @@ const app = express();
 // Security middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? 'http://localhost:3000' 
+  // Use FRONTEND_URL env variable in production, localhost:3000 in development
+  origin: process.env.NODE_ENV === 'production'
+    ? process.env.FRONTEND_URL
     : 'http://localhost:3000',
   credentials: true
 }));
