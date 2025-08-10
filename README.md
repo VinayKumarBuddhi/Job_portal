@@ -118,6 +118,9 @@ EMAIL_PASS=your-email-password
 CLOUDINARY_CLOUD_NAME=your-cloudinary-name
 CLOUDINARY_API_KEY=your-cloudinary-api-key
 CLOUDINARY_API_SECRET=your-cloudinary-api-secret
+# Local LLM (Ollama) configuration
+OLLAMA_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=llama3
 ```
 
 Create `frontend/.env`:
@@ -142,6 +145,51 @@ npm start
 The application will be available at:
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:5000
+
+## 🤖 AI Cover Letter Generation (via Ollama)
+
+We added an AI-powered feature that auto-generates a tailored cover letter from the job seeker’s resume and the selected job description.
+
+### What was implemented
+- Backend route `POST /api/ai/generate-cover-letter` (protected, `jobseeker` role):
+  - Reads the authenticated user’s resume file path (`User.resume`).
+  - Extracts resume text (PDF via `pdf-parse`, DOCX via `mammoth`).
+  - Loads the job’s title and description by `jobId`.
+  - Calls the local Ollama server (`/api/generate`) with model `OLLAMA_MODEL` (default `llama3`).
+  - Returns `{ coverLetter }` to the client.
+- Frontend (`jobseeker/BrowseJobs.js`):
+  - In the Apply modal, added a “Generate with AI” button that calls the above endpoint and pre-fills the Cover Letter textarea. Supports “Regenerate”.
+
+### Dependencies added (backend)
+- `axios` (HTTP client to call Ollama)
+- `pdf-parse` (PDF text extraction)
+- `mammoth` (DOCX text extraction)
+
+### Resume format support
+- Recommended: PDF or DOCX. Plain `.doc` is not parsed (falls back to empty). Ensure your resume is uploaded in Profile before using AI generation.
+
+### Install and run Ollama (Windows)
+1. Install Ollama
+   - Winget: `winget install Ollama.Ollama -s winget`
+   - Or download installer from `https://ollama.com`
+2. Pull a model
+   - `ollama pull llama3` (or `ollama pull llama3:8b-instruct`)
+3. Ensure server is running
+   - Typically runs automatically. Verify: `curl http://127.0.0.1:11434/api/version`
+   - If needed, start manually: `ollama serve`
+4. Configure backend (optional)
+   - Set `OLLAMA_URL` and `OLLAMA_MODEL` in `backend/config.env` (defaults shown above) and restart the backend.
+
+### Using the AI feature
+1. Upload your resume (PDF/DOCX) in your profile.
+2. Navigate to Job Seeker → Browse Jobs → click Apply on a job.
+3. Click “Generate with AI” to auto-fill the cover letter. Edit if needed, then submit.
+
+### Troubleshooting
+- Port in use (11434): Ollama is already running. Don’t run `ollama serve` again. Verify via `curl http://127.0.0.1:11434/api/version`.
+- Change port: `set OLLAMA_HOST=127.0.0.1:11500` then `ollama serve`. Update `OLLAMA_URL` accordingly.
+- Model not found: run `ollama pull <modelTag>` and ensure `OLLAMA_MODEL` matches the pulled tag.
+- Slow generation on CPU: consider a smaller/quantized variant, or keep requests short.
 
 ## 📚 API Documentation
 

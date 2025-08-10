@@ -48,6 +48,7 @@ app.use('/api/applications', require('./routes/applications'));
 app.use('/api/companies', require('./routes/companies'));
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/employer', require('./routes/employer'));
+app.use('/api/ai', require('./routes/ai'));
 app.use('/api/hello', (req, res) => {
   res.json({ message: 'Hello World' });
 });

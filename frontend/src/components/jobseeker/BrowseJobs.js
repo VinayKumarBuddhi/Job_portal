@@ -12,6 +12,7 @@ const BrowseJobs = ({ refreshStats }) => {
   const [message, setMessage] = useState('');
   const [appliedJobIds, setAppliedJobIds] = useState([]);
   const [userProfile, setUserProfile] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
 
   useEffect(() => {
     fetchJobs();
@@ -121,6 +122,33 @@ const BrowseJobs = ({ refreshStats }) => {
     }
   };
 
+  const handleGenerateAI = async () => {
+    if (!selectedJob) return;
+    setAiLoading(true);
+    setMessage('');
+    try {
+      const token = localStorage.getItem('token');
+      const resp = await fetch(`${BASE_URL}/ai/generate-cover-letter`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ jobId: selectedJob._id })
+      });
+      const data = await resp.json();
+      if (resp.ok && data?.data?.coverLetter) {
+        setCoverLetter(data.data.coverLetter);
+      } else {
+        setMessage(data?.message || 'AI generation failed');
+      }
+    } catch (err) {
+      setMessage('Network error generating cover letter.');
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   if (loading) {
     return <div style={{ textAlign: 'center', padding: '40px' }}>Loading jobs...</div>;
   }
@@ -179,6 +207,16 @@ const BrowseJobs = ({ refreshStats }) => {
               <div style={{ marginBottom: '15px' }}>
                 <label>Cover Letter (min 50 chars):</label>
                 <textarea value={coverLetter} onChange={e => setCoverLetter(e.target.value)} rows={4} style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '5px', fontSize: '15px', marginTop: '5px' }} />
+                <div style={{ marginTop: '8px', display: 'flex', gap: '10px' }}>
+                  <button type="button" onClick={handleGenerateAI} disabled={aiLoading} style={{ padding: '6px 12px', background: '#0d6efd', color: '#fff', border: 'none', borderRadius: '4px', cursor: aiLoading ? 'not-allowed' : 'pointer' }}>
+                    {aiLoading ? 'Generating...' : 'Generate with AI'}
+                  </button>
+                  {coverLetter && (
+                    <button type="button" onClick={handleGenerateAI} disabled={aiLoading} style={{ padding: '6px 12px', background: '#6f42c1', color: '#fff', border: 'none', borderRadius: '4px', cursor: aiLoading ? 'not-allowed' : 'pointer' }}>
+                      {aiLoading ? 'Regenerating...' : 'Regenerate'}
+                    </button>
+                  )}
+                </div>
               </div>
               <div style={{ marginBottom: '15px' }}>
                 <label>Expected Salary:</label>
