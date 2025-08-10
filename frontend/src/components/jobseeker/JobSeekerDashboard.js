@@ -12,6 +12,7 @@ const JobSeekerDashboard = () => {
   const [loadingStats, setLoadingStats] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
 
   // Add welcome message for the user
   const renderWelcomeMessage = () => {
@@ -69,8 +70,8 @@ const JobSeekerDashboard = () => {
         const apps = data.data || [];
         const total = apps.length;
         const accepted = apps.filter(a => a.status === 'accepted').length;
-        const rejected = apps.filter(a => a.status === 'rejected').length;
         const pending = apps.filter(a => a.status === 'pending').length;
+        const rejected = apps.filter(a => a.status === 'rejected').length;
         setStats({ total, accepted, rejected, pending });
       } else {
         setStats({ total: 0, accepted: 0, rejected: 0, pending: 0 });
@@ -82,11 +83,29 @@ const JobSeekerDashboard = () => {
     }
   }, []);
 
+  const fetchProfile = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const userData = JSON.parse(localStorage.getItem('user'));
+      const userId = userData?.id || userData?._id;
+      const response = await fetch(`${BASE_URL}/users/${userId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setProfile(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  }, []);
+
   useEffect(() => {
     if (activeTab === 'dashboard') {
       fetchStats();
+      fetchProfile();
     }
-  }, [activeTab, fetchStats]);
+  }, [activeTab, fetchStats, fetchProfile]);
 
   // Pass this to children so they can trigger a stats refresh
   const refreshStats = fetchStats;
@@ -157,6 +176,47 @@ const JobSeekerDashboard = () => {
                     <StatCard label="Rejected" value={stats.rejected} color="#dc3545" />
                     <StatCard label="Pending" value={stats.pending} color="#ffc107" />
                   </>
+                )}
+              </div>
+              
+              {/* Resume Status Section */}
+              <div style={{ marginTop: '40px', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '10px', maxWidth: '600px', margin: '40px auto 0' }}>
+                <h3 style={{ margin: '0 0 15px 0', color: '#333', textAlign: 'center' }}>Resume Status</h3>
+                {profile ? (
+                  <div style={{ textAlign: 'center' }}>
+                    {profile.resume ? (
+                      <div style={{ color: '#28a745', fontSize: '18px', marginBottom: '15px' }}>
+                        ✓ Resume uploaded successfully
+                      </div>
+                    ) : (
+                      <div style={{ color: '#dc3545', fontSize: '18px', marginBottom: '15px' }}>
+                        ⚠ No resume uploaded
+                      </div>
+                    )}
+                    <p style={{ color: '#666', margin: '0 0 15px 0' }}>
+                      {profile.resume 
+                        ? 'Your resume is ready for job applications!' 
+                        : 'Upload your resume to increase your chances of getting hired.'
+                      }
+                    </p>
+                    <button 
+                      onClick={() => setActiveTab('profile')} 
+                      style={{
+                        padding: '10px 20px',
+                        backgroundColor: profile.resume ? '#17a2b8' : '#28a745',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold',
+                        fontSize: '14px'
+                      }}
+                    >
+                      {profile.resume ? 'Update Resume' : 'Upload Resume'}
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', color: '#666' }}>Loading resume status...</div>
                 )}
               </div>
             </div>

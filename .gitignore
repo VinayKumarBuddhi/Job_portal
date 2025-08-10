@@ -37,3 +37,7 @@ Thumbs.db
 
 # Git
 /frontend/.git
+
+# Uploaded files (keep directory structure)
+/backend/uploads/resumes/*
+!/backend/uploads/resumes/.gitkeep

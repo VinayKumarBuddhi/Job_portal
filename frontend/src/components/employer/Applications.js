@@ -11,6 +11,34 @@ const Applications = () => {
   const [updatingStatus, setUpdatingStatus] = useState(null);
   const [successMessage, setSuccessMessage] = useState('');
 
+  const handleSecuredResumeDownload = async (applicationId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${BASE_URL}/employer/applications/${applicationId}/resume`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to download resume');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'resume.pdf';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (e) {
+      alert(e.message || 'Failed to download resume');
+    }
+  };
+
   const fetchApplications = useCallback(async () => {
     try {
       setLoading(true);
@@ -493,7 +521,30 @@ const Applications = () => {
                     }}>{application.coverLetter || 'No cover letter provided'}</div>
                     {application.resume && (
                       <div style={{ marginTop: 10 }}>
-                        <a href={application.resume} target="_blank" rel="noopener noreferrer" style={{ color: '#007bff', textDecoration: 'underline', fontSize: 15 }}>📄 View Resume</a>
+                        {(() => {
+                          const isHttp = /^https?:\/\//i.test(application.resume || '');
+                          const isUploadsPath = (application.resume || '').startsWith('uploads/');
+                          const directUrl = isHttp ? application.resume : (isUploadsPath ? `${BASE_URL.replace('/api','')}/${application.resume}` : null);
+
+                          return directUrl ? (
+                            <a
+                              href={directUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{ color: '#007bff', textDecoration: 'underline', fontSize: 15 }}
+                            >
+                              📄 View Resume
+                            </a>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleSecuredResumeDownload(application._id)}
+                              style={{ color: '#007bff', textDecoration: 'underline', fontSize: 15, background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
+                            >
+                              📄 View Resume
+                            </button>
+                          );
+                        })()}
                       </div>
                     )}
                   </div>

@@ -151,6 +151,46 @@ router.put('/users/:id/verify', async (req, res, next) => {
   }
 });
 
+// @desc    Delete user
+// @route   DELETE /api/admin/users/:id
+// @access  Private (Admin only)
+router.delete('/users/:id', async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return next(new ErrorResponse(`User not found with id of ${req.params.id}`, 404));
+    }
+
+    // Prevent admin from deleting themselves
+    if (user._id.toString() === req.user.id) {
+      return next(new ErrorResponse('Admin cannot delete their own account', 400));
+    }
+
+    // Delete all applications by this user
+    await Application.deleteMany({ applicant: req.params.id });
+
+    // Delete all jobs posted by this user if they are an employer
+    if (user.role === 'employer') {
+      await Job.deleteMany({ postedBy: req.params.id });
+      // Also delete applications for jobs posted by this user
+      const jobsByUser = await Job.find({ postedBy: req.params.id });
+      const jobIds = jobsByUser.map(job => job._id);
+      await Application.deleteMany({ job: { $in: jobIds } });
+    }
+
+    // Delete the user
+    await User.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({
+      success: true,
+      message: 'User deleted successfully'
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // @desc    Verify company
 // @route   PUT /api/admin/companies/:id/verify
 // @access  Private (Admin only)

@@ -12,11 +12,23 @@ const MyApplications = () => {
     // eslint-disable-next-line
   }, []);
 
+  const getAuthToken = () => {
+    try {
+      const user = JSON.parse(localStorage.getItem('user'));
+      const fromUser = user?.token || '';
+      if (fromUser) return fromUser;
+      const fallback = localStorage.getItem('token') || '';
+      return fallback;
+    } catch (e) {
+      return localStorage.getItem('token') || '';
+    }
+  };
+
   const fetchApplications = async () => {
     setLoading(true);
     setMessage('');
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const response = await fetch(`${BASE_URL}/applications/my-applications`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -24,8 +36,13 @@ const MyApplications = () => {
         const data = await response.json();
         setApplications(data.data || []);
       } else {
+        let errMsg = 'Failed to fetch applications';
+        try {
+          const err = await response.json();
+          errMsg = err.message || errMsg;
+        } catch {}
         setApplications([]);
-        setMessage('Failed to fetch applications');
+        setMessage(errMsg);
       }
     } catch (error) {
       setApplications([]);
@@ -39,7 +56,7 @@ const MyApplications = () => {
     if (!window.confirm('Are you sure you want to withdraw this application?')) return;
     setMessage('');
     try {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       const response = await fetch(`${BASE_URL}/applications/${appId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
@@ -48,7 +65,12 @@ const MyApplications = () => {
         setApplications(applications.filter(app => app._id !== appId));
         setMessage('Application withdrawn.');
       } else {
-        setMessage('Failed to withdraw application');
+        let errMsg = 'Failed to withdraw application';
+        try {
+          const err = await response.json();
+          errMsg = err.message || errMsg;
+        } catch {}
+        setMessage(errMsg);
       }
     } catch (error) {
       setMessage('Network error. Please try again.');
@@ -90,7 +112,19 @@ const MyApplications = () => {
               {expanded === app._id && (
                 <div style={{ marginTop: '15px', background: '#fff', borderRadius: '6px', padding: '15px', boxShadow: '0 1px 3px rgba(0,0,0,0.03)' }}>
                   <div style={{ marginBottom: '8px' }}><strong>Cover Letter:</strong><br />{app.coverLetter || '-'}</div>
-                  <div style={{ marginBottom: '8px' }}><strong>Resume:</strong> {app.resume ? (<a href={app.resume} target="_blank" rel="noopener noreferrer">{app.resume}</a>) : '-'}</div>
+                  <div style={{ marginBottom: '8px' }}>
+                    <strong>Resume:</strong> {(() => {
+                      const isHttp = /^https?:\/\//i.test(app.resume || '');
+                      const isUploadsPath = (app.resume || '').startsWith('uploads/');
+                      const directUrl = isHttp ? app.resume : (isUploadsPath ? `${BASE_URL.replace('/api','')}/${app.resume}` : null);
+
+                      return directUrl ? (
+                        <a href={directUrl} target="_blank" rel="noopener noreferrer">📄 View Resume</a>
+                      ) : (
+                        app.resume ? 'Resume on file (no link)' : '-'
+                      );
+                    })()}
+                  </div>
                   <div style={{ marginBottom: '8px' }}><strong>Expected Salary:</strong> {app.expectedSalary || '-'}</div>
                   <div style={{ marginBottom: '8px' }}><strong>Availability:</strong> {app.availability || '-'}</div>
                   {app.status === 'rejected' && app.notes && (

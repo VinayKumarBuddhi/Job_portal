@@ -9,13 +9,14 @@ const BrowseJobs = ({ refreshStats }) => {
   const [coverLetter, setCoverLetter] = useState('');
   const [expectedSalary, setExpectedSalary] = useState('');
   const [availability, setAvailability] = useState('immediately');
-  const [resume, setResume] = useState('');
   const [message, setMessage] = useState('');
   const [appliedJobIds, setAppliedJobIds] = useState([]);
+  const [userProfile, setUserProfile] = useState(null);
 
   useEffect(() => {
     fetchJobs();
     fetchApplications();
+    fetchUserProfile();
     // eslint-disable-next-line
   }, []);
 
@@ -46,12 +47,34 @@ const BrowseJobs = ({ refreshStats }) => {
     }
   };
 
+  const fetchUserProfile = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const user = JSON.parse(localStorage.getItem('user'));
+      const userId = user?.id || user?._id;
+      const response = await fetch(`${BASE_URL}/users/${userId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setUserProfile(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
+
   const handleApplyClick = (job) => {
+    // Check if user has uploaded a resume
+    if (!userProfile?.resume) {
+      setMessage('Please upload your resume in your profile before applying for jobs.');
+      return;
+    }
+
     setSelectedJob(job);
     setCoverLetter('');
     setExpectedSalary('');
     setAvailability('immediately');
-    setResume('');
     setMessage('');
     setShowModal(true);
   };
@@ -67,10 +90,6 @@ const BrowseJobs = ({ refreshStats }) => {
       setMessage('Expected salary is required and must be a number.');
       return;
     }
-    if (!resume) {
-      setMessage('Resume is required.');
-      return;
-    }
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`${BASE_URL}/applications`, {
@@ -83,8 +102,7 @@ const BrowseJobs = ({ refreshStats }) => {
           job: selectedJob._id,
           coverLetter,
           expectedSalary,
-          availability,
-          resume
+          availability
         })
       });
       if (response.ok) {
@@ -110,6 +128,18 @@ const BrowseJobs = ({ refreshStats }) => {
   return (
     <div>
       <h2 style={{ marginBottom: '25px', color: '#333' }}>Browse Jobs</h2>
+      {message && (
+        <div style={{ 
+          marginBottom: '20px', 
+          padding: '15px', 
+          backgroundColor: message.includes('success') ? '#d4edda' : '#f8d7da', 
+          color: message.includes('success') ? '#155724' : '#721c24', 
+          borderRadius: '5px', 
+          border: `1px solid ${message.includes('success') ? '#c3e6cb' : '#f5c6cb'}` 
+        }}>
+          {message}
+        </div>
+      )}
       {jobs.length === 0 ? (
         <div style={{ textAlign: 'center', color: '#888' }}>No jobs found.</div>
       ) : (
@@ -138,6 +168,13 @@ const BrowseJobs = ({ refreshStats }) => {
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ background: 'white', borderRadius: '10px', padding: '30px', minWidth: '350px', maxWidth: '90vw', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}>
             <h3 style={{ marginTop: 0, color: '#007bff' }}>Apply for {selectedJob.title}</h3>
+            {userProfile?.resume && (
+              <div style={{ marginBottom: '15px', padding: '10px', backgroundColor: '#d4edda', borderRadius: '5px', border: '1px solid #c3e6cb' }}>
+                <span style={{ color: '#155724', fontSize: '14px' }}>
+                  ✓ Your resume will be automatically included with this application
+                </span>
+              </div>
+            )}
             <form onSubmit={handleSubmitApplication}>
               <div style={{ marginBottom: '15px' }}>
                 <label>Cover Letter (min 50 chars):</label>
@@ -157,13 +194,10 @@ const BrowseJobs = ({ refreshStats }) => {
                   <option value="negotiable">Negotiable</option>
                 </select>
               </div>
-              <div style={{ marginBottom: '15px' }}>
-                <label>Resume (paste link or text):</label>
-                <input type="text" value={resume} onChange={e => setResume(e.target.value)} style={{ width: '100%', padding: '10px', border: '1px solid #ddd', borderRadius: '5px', fontSize: '15px', marginTop: '5px' }} />
-              </div>
+
               {message && <div style={{ marginBottom: '10px', color: message.includes('success') ? 'green' : 'red' }}>{message}</div>}
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-                <button type="button" onClick={() => setShowModal(false)} style={{ padding: '8px 18px', background: '#6c757d', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Cancel</button>
+                <button type="button" onClick={() => { setShowModal(false); setMessage(''); }} style={{ padding: '8px 18px', background: '#6c757d', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>Cancel</button>
                 <button type="submit" style={{ padding: '8px 18px', background: '#28a745', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>Submit Application</button>
               </div>
             </form>

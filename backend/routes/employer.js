@@ -2,6 +2,8 @@ const express = require('express');
 const User = require('../models/User');
 const Job = require('../models/Job');
 const Company = require('../models/Company');
+const fs = require('fs');
+const path = require('path');
 const Application = require('../models/Application');
 const { protect, authorize } = require('../middleware/auth');
 const ErrorResponse = require('../utils/errorResponse');
@@ -370,6 +372,45 @@ router.get('/applications', async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: applications
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// @desc    Download applicant resume for an application
+// @route   GET /api/employer/applications/:id/resume
+// @access  Private (Employer only)
+router.get('/applications/:id/resume', async (req, res, next) => {
+  try {
+    const application = await Application.findById(req.params.id).populate('applicant', 'resume');
+
+    if (!application) {
+      return next(new ErrorResponse(`Application not found with id of ${req.params.id}`, 404));
+    }
+
+    // Verify the job belongs to the employer
+    const job = await Job.findById(application.job);
+    if (!job || job.postedBy.toString() !== req.user.id) {
+      return next(new ErrorResponse('Not authorized to access this application\'s resume', 401));
+    }
+
+    const userResumePath = application.applicant?.resume;
+
+    if (!userResumePath || userResumePath === '') {
+      return next(new ErrorResponse('No resume found for this applicant', 404));
+    }
+
+    const resumeFilePath = path.join(__dirname, '..', '..', userResumePath);
+    if (!fs.existsSync(resumeFilePath)) {
+      return next(new ErrorResponse('Resume file not found on server', 404));
+    }
+
+    res.download(resumeFilePath, (err) => {
+      if (err) {
+        console.error('Error downloading resume:', err);
+        return next(new ErrorResponse('Error downloading resume file', 500));
+      }
     });
   } catch (error) {
     next(error);

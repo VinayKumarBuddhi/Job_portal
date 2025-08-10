@@ -3,6 +3,9 @@ const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { protect, authorize } = require('../middleware/auth');
 const ErrorResponse = require('../utils/errorResponse');
+const upload = require('../middleware/upload');
+const fs = require('fs');
+const path = require('path');
 
 const router = express.Router();
 
@@ -109,6 +112,118 @@ router.delete('/:id', protect, async (req, res, next) => {
     }
 
     await user.remove();
+
+    res.status(200).json({
+      success: true,
+      data: {}
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// @desc    Upload resume
+// @route   POST /api/users/:id/resume
+// @access  Private (User owner only)
+router.post('/:id/resume', protect, upload.single('resume'), async (req, res, next) => {
+  try {
+    // Check if user is authorized to upload resume
+    if (req.params.id !== req.user.id) {
+      return next(new ErrorResponse(`User ${req.user.id} is not authorized to upload resume for this user`, 401));
+    }
+
+    if (!req.file) {
+      return next(new ErrorResponse('Please upload a file', 400));
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return next(new ErrorResponse(`User not found with id of ${req.params.id}`, 404));
+    }
+
+    // Delete old resume file if exists
+    if (user.resume && user.resume !== '') {
+      const oldResumePath = path.join(__dirname, '..', user.resume);
+      if (fs.existsSync(oldResumePath)) {
+        fs.unlinkSync(oldResumePath);
+      }
+    }
+
+    // Update user with new resume path
+    const resumePath = req.file.path.replace(/\\/g, '/'); // Normalize path for cross-platform
+    user.resume = resumePath;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      data: {
+        resume: resumePath,
+        filename: req.file.originalname
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// @desc    Download resume
+// @route   GET /api/users/:id/resume
+// @access  Private (User owner or admin)
+router.get('/:id/resume', protect, async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return next(new ErrorResponse(`User not found with id of ${req.params.id}`, 404));
+    }
+
+    // Check if user is authorized to download resume
+    if (req.params.id !== req.user.id && req.user.role !== 'admin') {
+      return next(new ErrorResponse(`User ${req.user.id} is not authorized to download this resume`, 401));
+    }
+
+    if (!user.resume || user.resume === '') {
+      return next(new ErrorResponse('No resume found for this user', 404));
+    }
+
+    const resumePath = path.join(__dirname, '..', user.resume);
+    if (!fs.existsSync(resumePath)) {
+      return next(new ErrorResponse('Resume file not found', 404));
+    }
+
+    res.download(resumePath);
+  } catch (error) {
+    next(error);
+  }
+});
+
+// @desc    Delete resume
+// @route   DELETE /api/users/:id/resume
+// @access  Private (User owner only)
+router.delete('/:id/resume', protect, async (req, res, next) => {
+  try {
+    // Check if user is authorized to delete resume
+    if (req.params.id !== req.user.id) {
+      return next(new ErrorResponse(`User ${req.user.id} is not authorized to delete resume for this user`, 401));
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return next(new ErrorResponse(`User not found with id of ${req.params.id}`, 404));
+    }
+
+    if (!user.resume || user.resume === '') {
+      return next(new ErrorResponse('No resume found for this user', 404));
+    }
+
+    // Delete resume file
+    const resumePath = path.join(__dirname, '..', user.resume);
+    if (fs.existsSync(resumePath)) {
+      fs.unlinkSync(resumePath);
+    }
+
+    // Update user to remove resume reference
+    user.resume = '';
+    await user.save();
 
     res.status(200).json({
       success: true,

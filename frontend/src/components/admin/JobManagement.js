@@ -22,7 +22,7 @@ const JobManagement = () => {
       
       if (response.ok) {
         const data = await response.json();
-        setJobs(data);
+        setJobs(data.data || data); // Handle both response structures
       }
     } catch (error) {
       console.error('Error fetching jobs:', error);
@@ -31,13 +31,13 @@ const JobManagement = () => {
         {
           _id: '1',
           title: 'Senior Developer',
-          company: 'Tech Corp',
+          company: { name: 'Tech Corp' },
           location: 'San Francisco',
-          type: 'Full-time',
-          status: 'active',
+          type: 'full-time',
+          isActive: true,
           applications: 15,
           createdAt: '2024-01-15',
-          employer: {
+          postedBy: {
             name: 'Jane Smith',
             email: 'jane@techcorp.com'
           }
@@ -45,13 +45,13 @@ const JobManagement = () => {
         {
           _id: '2',
           title: 'Marketing Manager',
-          company: 'Digital Solutions',
+          company: { name: 'Digital Solutions' },
           location: 'New York',
-          type: 'Full-time',
-          status: 'active',
+          type: 'full-time',
+          isActive: true,
           applications: 8,
           createdAt: '2024-01-12',
-          employer: {
+          postedBy: {
             name: 'John Doe',
             email: 'john@digitalsolutions.com'
           }
@@ -59,13 +59,13 @@ const JobManagement = () => {
         {
           _id: '3',
           title: 'UI/UX Designer',
-          company: 'Creative Agency',
+          company: { name: 'Creative Agency' },
           location: 'Remote',
-          type: 'Contract',
-          status: 'inactive',
+          type: 'contract',
+          isActive: false,
           applications: 3,
           createdAt: '2024-01-10',
-          employer: {
+          postedBy: {
             name: 'Bob Johnson',
             email: 'bob@creativeagency.com'
           }
@@ -79,18 +79,17 @@ const JobManagement = () => {
   const handleStatusChange = async (jobId, newStatus) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${BASE_URL}/admin/jobs/${jobId}/status`, {
+      const response = await fetch(`${BASE_URL}/admin/jobs/${jobId}/toggle`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status: newStatus })
+        }
       });
 
       if (response.ok) {
-        setJobs(jobs.map(job => 
-          job._id === jobId ? { ...job, status: newStatus } : job
+        setJobs((Array.isArray(jobs) ? jobs : []).map(job => 
+          job._id === jobId ? { ...job, isActive: newStatus } : job
         ));
       }
     } catch (error) {
@@ -110,7 +109,7 @@ const JobManagement = () => {
         });
 
         if (response.ok) {
-          setJobs(jobs.filter(job => job._id !== jobId));
+          setJobs((Array.isArray(jobs) ? jobs : []).filter(job => job._id !== jobId));
         }
       } catch (error) {
         console.error('Error deleting job:', error);
@@ -118,10 +117,11 @@ const JobManagement = () => {
     }
   };
 
-  const filteredJobs = jobs.filter(job => {
-    const matchesFilter = filter === 'all' || job.status === filter;
+  const filteredJobs = (Array.isArray(jobs) ? jobs : []).filter(job => {
+    const matchesFilter = filter === 'all' || job.isActive === (filter === 'true');
+    const companyName = typeof job.company === 'object' ? job.company.name : job.company;
     const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         job.company.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         companyName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          job.location.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesFilter && matchesSearch;
   });
@@ -159,10 +159,9 @@ const JobManagement = () => {
               fontSize: '14px'
             }}
           >
-            <option value="all">All Jobs</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="expired">Expired</option>
+                    <option value="all">All Jobs</option>
+        <option value="true">Active</option>
+        <option value="false">Inactive</option>
           </select>
         </div>
         
@@ -224,10 +223,10 @@ const JobManagement = () => {
             <div>
               <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>{job.title}</div>
               <div style={{ fontSize: '12px', color: '#666' }}>
-                Posted by: {job.employer?.name}
+                Posted by: {job.postedBy?.name}
               </div>
             </div>
-            <div>{job.company}</div>
+            <div>{typeof job.company === 'object' ? job.company.name : job.company}</div>
             <div>{job.location}</div>
             <div>
               <span style={{
@@ -235,10 +234,13 @@ const JobManagement = () => {
                 borderRadius: '12px',
                 fontSize: '12px',
                 fontWeight: 'bold',
-                backgroundColor: job.type === 'Full-time' ? '#28a745' : '#ffc107',
+                backgroundColor: job.type === 'full-time' ? '#28a745' : 
+                               job.type === 'part-time' ? '#17a2b8' :
+                               job.type === 'contract' ? '#ffc107' :
+                               job.type === 'internship' ? '#6f42c1' : '#fd7e14',
                 color: 'white'
               }}>
-                {job.type}
+                {job.type.charAt(0).toUpperCase() + job.type.slice(1)}
               </span>
             </div>
             <div>
@@ -247,11 +249,10 @@ const JobManagement = () => {
                 borderRadius: '12px',
                 fontSize: '12px',
                 fontWeight: 'bold',
-                backgroundColor: job.status === 'active' ? '#28a745' : 
-                               job.status === 'inactive' ? '#6c757d' : '#dc3545',
+                backgroundColor: job.isActive ? '#28a745' : '#6c757d',
                 color: 'white'
               }}>
-                {job.status}
+                {job.isActive ? 'Active' : 'Inactive'}
               </span>
             </div>
             <div style={{ textAlign: 'center' }}>
@@ -263,15 +264,15 @@ const JobManagement = () => {
                 backgroundColor: '#007bff',
                 color: 'white'
               }}>
-                {job.applications}
+                {job.applications.length}
               </span>
             </div>
             <div style={{ display: 'flex', gap: '5px' }}>
               <button
-                onClick={() => handleStatusChange(job._id, job.status === 'active' ? 'inactive' : 'active')}
+                onClick={() => handleStatusChange(job._id, !job.isActive)}
                 style={{
                   padding: '4px 8px',
-                  backgroundColor: job.status === 'active' ? '#6c757d' : '#28a745',
+                  backgroundColor: job.isActive ? '#6c757d' : '#28a745',
                   color: 'white',
                   border: 'none',
                   borderRadius: '3px',
@@ -279,7 +280,7 @@ const JobManagement = () => {
                   fontSize: '12px'
                 }}
               >
-                {job.status === 'active' ? 'Deactivate' : 'Activate'}
+                {job.isActive ? 'Deactivate' : 'Activate'}
               </button>
               <button
                 onClick={() => handleDeleteJob(job._id)}

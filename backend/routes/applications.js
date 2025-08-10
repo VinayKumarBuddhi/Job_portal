@@ -1,6 +1,7 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
 const Application = require('../models/Application');
+const User = require('../models/User');
 const Job = require('../models/Job');
 const { protect, authorize } = require('../middleware/auth');
 const ErrorResponse = require('../utils/errorResponse');
@@ -102,7 +103,6 @@ router.get('/:id', protect, async (req, res, next) => {
 router.post('/', protect, authorize('jobseeker'), [
   body('job').isMongoId().withMessage('Valid job ID is required'),
   body('coverLetter').trim().isLength({ min: 50, max: 2000 }).withMessage('Cover letter must be between 50 and 2000 characters'),
-  body('resume').notEmpty().withMessage('Resume is required'),
   body('expectedSalary').isNumeric().withMessage('Expected salary must be a number'),
   body('availability').isIn(['immediately', '2-weeks', '1-month', '3-months', 'negotiable']).withMessage('Invalid availability')
 ], async (req, res, next) => {
@@ -115,7 +115,13 @@ router.post('/', protect, authorize('jobseeker'), [
       });
     }
 
-    const { job: jobId, coverLetter, resume, expectedSalary, availability } = req.body;
+    const { job: jobId, coverLetter, expectedSalary, availability } = req.body;
+
+    // Fetch user's stored resume from their profile
+    const applicant = await User.findById(req.user.id).select('resume');
+    if (!applicant || !applicant.resume) {
+      return next(new ErrorResponse('Please upload your resume in your profile before applying for jobs', 400));
+    }
 
     // Check if job exists and is active
     const job = await Job.findById(jobId);
@@ -147,7 +153,7 @@ router.post('/', protect, authorize('jobseeker'), [
       applicant: req.user.id,
       company: job.company,
       coverLetter,
-      resume,
+      resume: applicant.resume,
       expectedSalary,
       availability
     });
@@ -229,7 +235,20 @@ router.delete('/:id', protect, authorize('jobseeker'), async (req, res, next) =>
       return next(new ErrorResponse('Cannot delete application that has been processed', 400));
     }
 
-    await application.remove();
+    // Delete the application (Mongoose v7: use deleteOne instead of remove)
+    await Application.deleteOne({ _id: application._id });
+
+    // Also remove the reference from the related job if present
+    try {
+      const job = await Job.findById(application.job);
+      if (job && Array.isArray(job.applications)) {
+        job.applications.pull(application._id);
+        await job.save();
+      }
+    } catch (e) {
+      // Non-fatal cleanup failure should not block user action
+      console.error('Failed to pull application from job.applications:', e);
+    }
 
     res.status(200).json({
       success: true,
